@@ -1,6 +1,12 @@
+#!/usr/bin/env python3
 import tkinter as tk
 from courses import *
+from db import *
 
+# Initialize the database when the application starts
+initialize_database()
+
+# GUI functions for creating courses and displaying course information
 def show_course_id():
     result_label.config(text=f"{course_id_entry.get()}: {course_title_entry.get()} - ${course_price_entry.get()} ({course_capacity_entry.get()} seats available)")
 
@@ -33,6 +39,7 @@ def create_classroom_course():
     else:
         result_label.config(text="Please provide both room number and address for the classroom course.")
 
+# GUI setup of the main window and input fields
 window = tk.Tk()
 window.title("Course Management")
 courses = []
@@ -77,6 +84,24 @@ online_button.grid(row=7, columnspan=1, pady=10, padx=10)
 
 classroom_button = tk.Button(window, text="Create Classroom Course", command=create_classroom_course, width=15, border=3)
 classroom_button.grid(row=8, columnspan=1, pady=10, padx=10)
+
+student_id_label = tk.Label(window, text="Student Id")
+student_id_label.grid(row=0, column=4, sticky="w", padx=8, pady= 4)
+student_id_entry = tk.Entry(window, width=10, border=3)
+student_id_entry.grid(row=0, column=5, sticky="w")
+
+student_name_label = tk.Label(window, text="Student Name")
+student_name_label.grid(row=0, column=2, sticky="w", padx=8 , pady= 4)
+student_name_entry = tk.Entry(window, width=30, border=3)
+student_name_entry.grid(row=0, column=3)
+
+student_email_label = tk.Label(window, text="Student Email")
+student_email_label.grid(row=1, column=2, sticky="w", padx=8, pady= 4)
+student_email_entry = tk.Entry(window, width=30, border=3)
+student_email_entry.grid(row=1, column=3)
+
+student_add_button = tk.Button(window, text="Add Student", command=lambda: add_student(student_id_entry.get(), student_name_entry.get(), student_email_entry.get()), width=15, border=3)
+student_add_button.grid(row=2, column=2, columnspan=1, pady=10, padx=10)
 
 result_label = tk.Label(window, text="", font=("Arial", 12))
 result_label.grid(row=9, columnspan=2, pady=10, padx=10)

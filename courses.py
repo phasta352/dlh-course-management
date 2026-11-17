@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
 from abc import ABC, abstractmethod
 
+# Base class for courses with common attributes and methods
 class Course:
     def __init__(self, course_id, title, price, capacity):
         if price < 0:
@@ -35,6 +37,7 @@ class Course:
     def __str__(self):
         return f"{self.course_id}: {self.title} - ${self.get_price()} ({self.get_capacity()} seats available)"
 
+# Subclasses for specific course types with additional attributes and methods
 class OnlineCourse(Course):
     def __init__(self, course_id, title, price, capacity, meeting_link):
         super().__init__(course_id, title, price, capacity)
@@ -51,9 +54,3 @@ class ClassroomCourse(Course):
 
     def joining_instructions(self):
         return f"You can find the class in room {self.room_number} at {self.address}"
-
-# courses = [OnlineCourse("C001", "Python Basics", 150, 10, "www.teams.com/join/C001"),
-#            ClassroomCourse("C002", "Python Intermediate", 200, 30, "C2.02.05", "14 Prte de France, 4360 Esch-Belval Esch-sur-Alzette")]
-
-# for course in courses:
-#     print(f"{course.title}: {course.joining_instructions()}")
