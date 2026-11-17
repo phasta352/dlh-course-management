@@ -9,15 +9,31 @@ class Course:
         
         self.course_id = course_id
         self.title = title
+        self.set_price(price)
+        self.set_capacity(capacity)
+
+    def set_price(self, price):
+        if price < 0:
+            raise ValueError("Price cannot be negative.")
         self.__price = price
-        self.__capacity = capacity 
+
+    def set_capacity(self, capacity):
+        if capacity <= 0:
+            raise ValueError("Capacity cannot be negative.")
+        self.__capacity = capacity
+
+    def get_price(self):
+        return self.__price
+
+    def get_capacity(self):
+        return self.__capacity
 
     @abstractmethod
     def joining_instructions(self):
         pass
 
     def __str__(self):
-        return f"{self.course_id}: {self.title} - ${self.price} ({self.capacity} seats available)"
+        return f"{self.course_id}: {self.title} - ${self.get_price()} ({self.get_capacity()} seats available)"
 
 class OnlineCourse(Course):
     def __init__(self, course_id, title, price, capacity, meeting_link):
