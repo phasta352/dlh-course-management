@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sqlite3
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 
 from courses import ClassroomCourse, OnlineCourse
 from db import add_student, add_course, initialize_database
@@ -82,73 +82,51 @@ def create_course():
         parent=window,
         )
 
-# GUI setup of the main window and input fields
+def add_field(parent, label_text, row, column, width=20):
+    label = tk.Label(parent, text=label_text)
+    label.grid(row=row, column=column, sticky="w", padx=8, pady=4)
+
+    entry = tk.Entry(parent, width=width, border=3)
+    entry.grid(row=row, column=column + 1, sticky="w")
+    return label, entry
+
+# GUI setup of the main window
 window = tk.Tk()
 window.title("Course Management")
-courses = []
 
-student_id_label = tk.Label(window, text="Student Id")
-student_id_label.grid(row=0, column=0, sticky="w", padx=8, pady= 4)
-student_id_entry = tk.Entry(window, width=10, border=3)
-student_id_entry.grid(row=0, column=1, sticky="w")
+# Create a notebook (tabbed interface) to separate course and student management
+notebook = ttk.Notebook(window)
+notebook.pack(fill="both", pady=10, expand=True)
+course_tab = ttk.Frame(notebook)
+notebook.add(course_tab, text="Courses")
+student_tab = ttk.Frame(notebook)
+notebook.add(student_tab, text="Students")
 
-student_name_label = tk.Label(window, text="Student Name")
-student_name_label.grid(row=2, column=0, sticky="w", padx=8 , pady= 4)
-student_name_entry = tk.Entry(window, width=30, border=3)
-student_name_entry.grid(row=2, column=1)
+# Add fields and buttons for student management
+student_id_label, student_id_entry = add_field(student_tab, "Student Id", 0, 0, width=10)
+student_name_label, student_name_entry = add_field(student_tab, "Student Name", 2, 0, width=30)
+student_email_label, student_email_entry = add_field(student_tab, "Student Email", 3, 0, width=30)
 
-student_email_label = tk.Label(window, text="Student Email")
-student_email_label.grid(row=3, column=0, sticky="w", padx=8, pady= 4)
-student_email_entry = tk.Entry(window, width=30, border=3)
-student_email_entry.grid(row=3, column=1)
-
-student_add_button = tk.Button(window, text="Add Student", command=add_student_from_gui, width=15, border=3)
+student_add_button = tk.Button(student_tab, text="Add Student", command=add_student_from_gui, width=15, border=3)
 student_add_button.grid(row=4, column=1, columnspan=1, pady=10, padx=10)
 
-course_id_label = tk.Label(window, text="Course Id")
-course_id_label.grid(row=6, column=0, sticky="w", padx=8, pady= 4)
-course_id_entry = tk.Entry(window, width=10, border=3)
-course_id_entry.grid(row=6, column=1, sticky="w")
-
-course_title_label = tk.Label(window, text="Course Title")
-course_title_label.grid(row=7, column=0, sticky="w", padx=8, pady= 4)
-course_title_entry = tk.Entry(window, width=30, border=3)
-course_title_entry.grid(row=7, column=1)
-
-course_price_label = tk.Label(window, text="Course Price")
-course_price_label.grid(row=8, column=0, sticky="w", padx=8, pady= 4)
-course_price_entry = tk.Entry(window, width=10, border=3)
-course_price_entry.grid(row=8, column=1, sticky="w")
-
-course_capacity_label = tk.Label(window, text="Course Capacity")
-course_capacity_label.grid(row=9, column=0, sticky="w", padx=8, pady= 4)
-course_capacity_entry = tk.Entry(window, width=10, border=3)
-course_capacity_entry.grid(row=9, column=1, sticky="w")
-
-course_meeting_link_label = tk.Label(window, text="Course Meeting Link")
-course_meeting_link_label.grid(row=10, column=0, sticky="w", padx=8, pady= 4)
-course_meeting_link_entry = tk.Entry(window, width=30, border=3)
-course_meeting_link_entry.grid(row=10, column=1)
-
-course_room_number_label = tk.Label(window, text="Course Room Number")
-course_room_number_label.grid(row=11, column=0, sticky="w", padx=8, pady= 4)
-course_room_number_entry = tk.Entry(window, width=10, border=3)
-course_room_number_entry.grid(row=11, column=1, sticky="w")
-
-course_address_label = tk.Label(window, text="Course Address")
-course_address_label.grid(row=12, column=0, sticky="w", padx=8, pady= 4)
-course_address_entry = tk.Entry(window, width=30, border=3)
-course_address_entry.grid(row=12, column=1)
+course_id_label, course_id_entry = add_field(course_tab, "Course Id", 0, 0, width=10)
+course_title_label, course_title_entry = add_field(course_tab, "Course Title", 1, 0, width=30)
+course_price_label, course_price_entry = add_field(course_tab, "Course Price", 2, 0, width=10)
+course_capacity_label, course_capacity_entry = add_field(course_tab, "Course Capacity", 3, 0, width=10)
+course_meeting_link_label, course_meeting_link_entry = add_field(course_tab, "Course Meeting Link", 4, 0, width=30)
+course_room_number_label, course_room_number_entry = add_field(course_tab, "Course Room Number", 5, 0, width=10)
+course_address_label, course_address_entry = add_field(course_tab, "Course Address", 6, 0, width=30)
 
 onlinevar = tk.BooleanVar()
-online_checkbutton = tk.Checkbutton(window, text="Online Course", variable=onlinevar)
-online_checkbutton.grid(row=13, column=0, padx=8, pady=4)
+online_checkbutton = tk.Checkbutton(course_tab, text="Online Course", variable=onlinevar)
+online_checkbutton.grid(row=7, column=0, padx=8, pady=4)
 
 classroomvar = tk.BooleanVar()
-classroom_checkbutton = tk.Checkbutton(window, text="Classroom Course", variable=classroomvar)
-classroom_checkbutton.grid(row=13, column=1, padx=8, pady=4)
+classroom_checkbutton = tk.Checkbutton(course_tab, text="Classroom Course", variable=classroomvar)
+classroom_checkbutton.grid(row=7, column=1, padx=8, pady=4)
 
-create_button = tk.Button(window, text="Create Course", command=create_course, width=15, border=3)
+create_button = tk.Button(course_tab, text="Create Course", command=create_course, width=15, border=3)
 create_button.grid(row=14, column=1, pady=10, padx=10)
 
 window.mainloop()
