@@ -4,7 +4,7 @@ from tkinter import messagebox, ttk
 
 from courses import ClassroomCourse, OnlineCourse
 from create_fields import add_field
-from db import add_course, get_courses
+from db.db import add_course, get_courses
 
 
 def build_courses_tab(notebook):

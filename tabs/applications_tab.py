@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from create_fields import add_field
-from db import APPLICATION_STATUSES, add_application, get_applications
+from db.db import APPLICATION_STATUSES, add_application, get_applications
 
 
 def build_applications_tab(notebook):
