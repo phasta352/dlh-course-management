@@ -43,6 +43,23 @@ def add_course(course_id, title, price, capacity, course_type, meeting_link=None
             (course_id, title, price, capacity, course_type, meeting_link, room_number, address))
         conn.commit()
 
+def get_students():
+    with sqlite3.connect(DB_PATH) as conn:
+        return conn.execute(
+            """SELECT student_id, name, email
+               FROM students
+               ORDER BY student_id"""
+        ).fetchall()
+
+def get_courses():
+    with sqlite3.connect(DB_PATH) as conn:
+        return conn.execute(
+            """SELECT course_id, title, course_type, price, capacity,
+                      meeting_link, room_number, address
+               FROM courses
+               ORDER BY course_id"""
+        ).fetchall()
+
 def add_application(company, job_title, status):
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
