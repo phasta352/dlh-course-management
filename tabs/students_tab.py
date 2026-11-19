@@ -2,7 +2,7 @@ import sqlite3
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from create_fields import add_field
+from main.create_fields import add_field
 from db.db import add_student, get_students
 
 

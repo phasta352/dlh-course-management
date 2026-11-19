@@ -27,7 +27,7 @@ def main():
     build_students_tab(notebook)
     build_applications_tab(notebook)
 
-    window.mainloop()
+    window.mainloop() 
 
 if __name__ == "__main__":
     main()
