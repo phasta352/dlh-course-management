@@ -5,6 +5,7 @@ from pathlib import Path
 DB_PATH = Path(__file__).with_name("training_center.db")
 APPLICATION_STATUSES = ("Applied", "Interview", "Offer", "Rejected")
 
+# Initialize the database and create tables if they don't exist --------------------------------------
 def initialize_database():
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute("""
@@ -32,6 +33,8 @@ def initialize_database():
                 ))""")
     conn.commit()
 
+
+# Functions for adding and retrieving students, courses, and applications --------------------------------------
 def add_student(student_id, name, email):
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute("INSERT INTO students (student_id, name, email) VALUES (?, ?, ?)",(student_id, name, email))
@@ -75,3 +78,32 @@ def get_applications():
                FROM applications
                ORDER BY application_id"""
         ).fetchall()
+
+    
+# Update functions for students, courses, and applications --------------------------------------
+def update_student(student_id, name, email):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            "UPDATE students SET name = ?, email = ? WHERE student_id = ?",
+            (name, email, student_id),
+        )
+        conn.commit()
+
+def update_course(course_id, title, price, capacity, course_type, meeting_link=None, room_number=None, address=None):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            """UPDATE courses
+               SET title = ?, price = ?, capacity = ?, course_type = ?,
+                   meeting_link = ?, room_number = ?, address = ?
+               WHERE course_id = ?""",
+            (title, price, capacity, course_type, meeting_link, room_number, address, course_id),
+        )
+        conn.commit()
+
+def update_application(application_id, company, job_title, status):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            "UPDATE applications SET company = ?, job_title = ?, status = ? WHERE application_id = ?",
+            (company, job_title, status, application_id),
+        )
+        conn.commit()
