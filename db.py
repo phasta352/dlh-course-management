@@ -3,6 +3,7 @@ import sqlite3
 from pathlib import Path
 
 DB_PATH = Path(__file__).with_name("training_center.db")
+APPLICATION_STATUSES = ("Applied", "Interview", "Offer", "Rejected")
 
 def initialize_database():
     with sqlite3.connect(DB_PATH) as conn:
@@ -21,6 +22,14 @@ def initialize_database():
                 meeting_link TEXT,
                 room_number TEXT,
                 address TEXT)""")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS applications (
+                application_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                company TEXT NOT NULL CHECK (trim(company) <> ''),
+                job_title TEXT NOT NULL CHECK (trim(job_title) <> ''),
+                status TEXT NOT NULL CHECK (
+                    status IN ('Applied', 'Interview', 'Offer', 'Rejected')
+                ))""")
     conn.commit()
 
 def add_student(student_id, name, email):
@@ -33,3 +42,19 @@ def add_course(course_id, title, price, capacity, course_type, meeting_link=None
         conn.execute("""INSERT INTO courses (course_id, title, price, capacity, course_type, meeting_link, room_number, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (course_id, title, price, capacity, course_type, meeting_link, room_number, address))
         conn.commit()
+
+def add_application(company, job_title, status):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            "INSERT INTO applications (company, job_title, status) VALUES (?, ?, ?)",
+            (company, job_title, status),
+        )
+        conn.commit()
+
+def get_applications():
+    with sqlite3.connect(DB_PATH) as conn:
+        return conn.execute(
+            """SELECT company, job_title, status
+               FROM applications
+               ORDER BY application_id"""
+        ).fetchall()

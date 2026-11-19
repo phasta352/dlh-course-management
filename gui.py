@@ -4,7 +4,14 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from courses import ClassroomCourse, OnlineCourse
-from db import add_student, add_course, initialize_database
+from db import (
+    APPLICATION_STATUSES,
+    add_application,
+    add_student,
+    add_course,
+    get_applications,
+    initialize_database,
+)
 
 initialize_database()
 
@@ -23,6 +30,9 @@ def add_student_from_gui():
             f"{student_name} was added successfully.",
             parent=window,
         )
+        student_id_entry.delete(0, tk.END)
+        student_name_entry.delete(0, tk.END)
+        student_email_entry.delete(0, tk.END)
 
 def create_course():
     course_id = course_id_entry.get()
@@ -81,6 +91,54 @@ def create_course():
         f"{course.title} was created successfully!",
         parent=window,
         )
+        course_id_entry.delete(0, tk.END)
+        course_title_entry.delete(0, tk.END)
+        course_price_entry.delete(0, tk.END)
+        course_capacity_entry.delete(0, tk.END)
+        course_meeting_link_entry.delete(0, tk.END)
+        course_room_number_entry.delete(0, tk.END)
+        course_address_entry.delete(0, tk.END)
+
+def display_saved_applications():
+    try:
+        applications = get_applications()
+    except sqlite3.Error as error:
+        messagebox.showerror(
+            "Could not load applications", str(error), parent=window
+        )
+        return
+
+    for item in application_list.get_children():
+        application_list.delete(item)
+    for application in applications:
+        application_list.insert("", tk.END, values=application)
+
+
+def save_application():
+    company = company_entry.get().strip()
+    job_title = job_title_entry.get().strip()
+    status = application_status.get()
+
+    if not company or not job_title:
+        messagebox.showwarning(
+            "Missing application details",
+            "Please enter both a company and a job title.",
+            parent=window,
+        )
+        return
+
+    try:
+        add_application(company, job_title, status)
+    except sqlite3.Error as error:
+        messagebox.showerror(
+            "Could not save application", str(error), parent=window
+        )
+        return
+
+    company_entry.delete(0, tk.END)
+    job_title_entry.delete(0, tk.END)
+    display_saved_applications()
+
 
 def add_field(parent, label_text, row, column, width=20):
     label = tk.Label(parent, text=label_text)
@@ -101,6 +159,8 @@ course_tab = ttk.Frame(notebook)
 notebook.add(course_tab, text="Courses")
 student_tab = ttk.Frame(notebook)
 notebook.add(student_tab, text="Students")
+application_tab = ttk.Frame(notebook)
+notebook.add(application_tab, text="Applications")
 
 # Add fields and buttons for student management
 student_id_label, student_id_entry = add_field(student_tab, "Student Id", 0, 0, width=10)
@@ -128,5 +188,47 @@ classroom_checkbutton.grid(row=7, column=1, padx=8, pady=4)
 
 create_button = tk.Button(course_tab, text="Create Course", command=create_course, width=15, border=3)
 create_button.grid(row=14, column=1, pady=10, padx=10)
+
+company_label, company_entry = add_field(
+    application_tab, "Company", 0, 0, width=30
+)
+job_title_label, job_title_entry = add_field(
+    application_tab, "Job Title", 1, 0, width=30
+)
+tk.Label(application_tab, text="Status").grid(
+    row=2, column=0, sticky="w", padx=8, pady=4
+)
+application_status = ttk.Combobox(
+    application_tab,
+    values=APPLICATION_STATUSES,
+    state="readonly",
+    width=27,
+)
+application_status.grid(row=2, column=1, sticky="w")
+application_status.set(APPLICATION_STATUSES[0])
+
+save_application_button = tk.Button(
+    application_tab,
+    text="Save Application",
+    command=save_application,
+    width=18,
+    border=3,
+)
+save_application_button.grid(row=3, column=1, pady=10, padx=10)
+
+application_list = ttk.Treeview(
+    application_tab,
+    columns=("company", "job_title", "status"),
+    show="headings",
+)
+application_list.heading("company", text="Company")
+application_list.heading("job_title", text="Job Title")
+application_list.heading("status", text="Status")
+application_list.grid(
+    row=4, column=0, columnspan=2, sticky="nsew", padx=8, pady=4
+)
+application_tab.columnconfigure(1, weight=1)
+application_tab.rowconfigure(4, weight=1)
+display_saved_applications()
 
 window.mainloop()
