@@ -4,7 +4,7 @@ from tkinter import messagebox, ttk
 
 from main.courses import ClassroomCourse, OnlineCourse
 from main.create_fields import add_field
-from db.db import add_course, get_courses
+from db.db import add_course, delete_course, get_courses, update_course
 
 
 def build_courses_tab(notebook):
@@ -59,6 +59,7 @@ def build_courses_tab(notebook):
         ),
         show="headings",
     )
+    selected_course_id = None
     for column, heading, width in (
         ("course_id", "Course ID", 90),
         ("title", "Title", 160),
@@ -81,14 +82,65 @@ def build_courses_tab(notebook):
             )
             return
 
+        clear_course_form()
         for item in course_list.get_children():
             course_list.delete(item)
         for course in courses:
             course_list.insert("", tk.END, values=course)
 
+    def clear_course_form():
+        nonlocal selected_course_id
+        selected_course_id = None
+        course_id_entry.configure(state="normal")
+        for entry in (
+            course_id_entry,
+            course_title_entry,
+            course_price_entry,
+            course_capacity_entry,
+            course_meeting_link_entry,
+            course_room_number_entry,
+            course_address_entry,
+        ):
+            entry.delete(0, tk.END)
+        onlinevar.set(False)
+        classroomvar.set(False)
+        course_list.selection_remove(course_list.selection())
+
+    def populate_course_form(_event=None):
+        nonlocal selected_course_id
+        selection = course_list.selection()
+        if not selection:
+            return
+
+        (
+            selected_course_id,
+            title,
+            course_type,
+            price,
+            capacity,
+            meeting_link,
+            room_number,
+            address,
+        ) = course_list.item(selection[0], "values")
+        course_id_entry.configure(state="normal")
+        values = (
+            (course_id_entry, selected_course_id),
+            (course_title_entry, title),
+            (course_price_entry, price),
+            (course_capacity_entry, capacity),
+            (course_meeting_link_entry, meeting_link or ""),
+            (course_room_number_entry, room_number or ""),
+            (course_address_entry, address or ""),
+        )
+        for entry, value in values:
+            entry.delete(0, tk.END)
+            entry.insert(0, value)
+        onlinevar.set(course_type == "online")
+        classroomvar.set(course_type == "classroom")
+
     def create_course():
         course_id = course_id_entry.get()
-        course_title = course_title_entry.get()
+        course_title = course_title_entry.get().strip()
         try:
             course_price = float(course_price_entry.get())
             course_capacity = int(course_capacity_entry.get())
@@ -96,6 +148,14 @@ def build_courses_tab(notebook):
             messagebox.showerror(
                 "Invalid course details",
                 "Enter a valid price and whole-number capacity.",
+                parent=courses_tab,
+            )
+            return
+
+        if course_price < 0 or course_capacity <= 0:
+            messagebox.showerror(
+                "Invalid course details",
+                "Price cannot be negative and capacity must be greater than zero.",
                 parent=courses_tab,
             )
             return
@@ -168,27 +228,165 @@ def build_courses_tab(notebook):
             f"{course.title} was created successfully!",
             parent=courses_tab,
         )
-        course_id_entry.delete(0, tk.END)
-        course_title_entry.delete(0, tk.END)
-        course_price_entry.delete(0, tk.END)
-        course_capacity_entry.delete(0, tk.END)
-        course_meeting_link_entry.delete(0, tk.END)
-        course_room_number_entry.delete(0, tk.END)
-        course_address_entry.delete(0, tk.END)
+        clear_course_form()
         display_saved_courses()
 
+    def update_selected_course():
+        if selected_course_id is None:
+            messagebox.showwarning(
+                "No course selected",
+                "Select a course to update.",
+                parent=courses_tab,
+            )
+            return
+
+        course_id = course_id_entry.get().strip()
+        course_title = course_title_entry.get().strip()
+        if not course_id:
+            messagebox.showwarning(
+                "Missing course details",
+                "Please enter a course ID.",
+                parent=courses_tab,
+            )
+            return
+
+        try:
+            course_price = float(course_price_entry.get())
+            course_capacity = int(course_capacity_entry.get())
+        except ValueError:
+            messagebox.showerror(
+                "Invalid course details",
+                "Enter a valid price and whole-number capacity.",
+                parent=courses_tab,
+            )
+            return
+
+        if course_price < 0 or course_capacity <= 0:
+            messagebox.showerror(
+                "Invalid course details",
+                "Price cannot be negative and capacity must be greater than zero.",
+                parent=courses_tab,
+            )
+            return
+
+        course_room_number = course_room_number_entry.get().strip()
+        course_address = course_address_entry.get().strip()
+        course_meeting_link = None
+        if onlinevar.get():
+            course_type = "online"
+            course_meeting_link = course_meeting_link_entry.get().strip()
+            if not course_meeting_link:
+                messagebox.showwarning(
+                    "Missing course details",
+                    "Please provide a meeting link for the online course.",
+                    parent=courses_tab,
+                )
+                return
+            course = OnlineCourse(
+                selected_course_id,
+                course_title,
+                course_price,
+                course_capacity,
+                course_meeting_link,
+            )
+        elif classroomvar.get():
+            course_type = "classroom"
+            if not course_room_number or not course_address:
+                messagebox.showwarning(
+                    "Missing course details",
+                    "Please provide both room number and address for the classroom course.",
+                    parent=courses_tab,
+                )
+                return
+            course = ClassroomCourse(
+                selected_course_id,
+                course_title,
+                course_price,
+                course_capacity,
+                course_room_number,
+                course_address,
+            )
+        else:
+            messagebox.showwarning(
+                "Course type required",
+                "Select online or classroom course.",
+                parent=courses_tab,
+            )
+            return
+
+        try:
+            update_course(
+                selected_course_id,
+                course_title,
+                course_price,
+                course_capacity,
+                course_type,
+                meeting_link=course_meeting_link,
+                room_number=course_room_number or None,
+                address=course_address or None,
+                new_course_id=course_id,
+            )
+        except sqlite3.Error as error:
+            messagebox.showerror(
+                "Could not update course", str(error), parent=courses_tab
+            )
+            return
+
+        messagebox.showinfo(
+            "Course updated",
+            f"{course.title} was updated successfully!",
+            parent=courses_tab,
+        )
+        clear_course_form()
+        display_saved_courses()
+
+    def delete_selected_course():
+        if selected_course_id is None:
+            messagebox.showwarning(
+                "No course selected",
+                "Select a course to delete.",
+                parent=courses_tab,
+            )
+            return
+        if not messagebox.askyesno(
+            "Delete course",
+            f"Delete course {selected_course_id}?",
+            parent=courses_tab,
+        ):
+            return
+
+        try:
+            delete_course(selected_course_id)
+        except sqlite3.Error as error:
+            messagebox.showerror(
+                "Could not delete course", str(error), parent=courses_tab
+            )
+            return
+
+        clear_course_form()
+        display_saved_courses()
+
+    course_list.bind("<<TreeviewSelect>>", populate_course_form)
     create_button = tk.Button(
         courses_tab, text="Create Course", command=create_course, width=15, border=3
     )
-    create_button.grid(row=8, column=1, pady=10, padx=10)
-    course_display_button = tk.Button(
+    create_button.grid(row=8, column=0, pady=10, padx=10)
+    course_update_button = tk.Button(
         courses_tab,
-        text="Display Courses",
-        command=display_saved_courses,
+        text="Update Course",
+        command=update_selected_course,
         width=15,
         border=3,
     )
-    course_display_button.grid(row=9, column=1, pady=10, padx=10)
+    course_update_button.grid(row=8, column=1, pady=10, padx=10)
+    course_delete_button = tk.Button(
+        courses_tab,
+        text="Delete Course",
+        command=delete_selected_course,
+        width=15,
+        border=3,
+    )
+    course_delete_button.grid(row=8, column=2, pady=10, padx=10)
 
     course_scrollbar = ttk.Scrollbar(
         courses_tab, orient="vertical", command=course_list.yview
@@ -201,11 +399,11 @@ def build_courses_tab(notebook):
         xscrollcommand=course_horizontal_scrollbar.set,
     )
     course_list.grid(
-        row=10, column=0, columnspan=2, sticky="nsew", padx=8, pady=4
+        row=10, column=0, columnspan=3, sticky="nsew", padx=8, pady=4
     )
-    course_scrollbar.grid(row=10, column=2, sticky="ns")
+    course_scrollbar.grid(row=10, column=3, sticky="ns")
     course_horizontal_scrollbar.grid(
-        row=11, column=0, columnspan=2, sticky="ew", padx=8
+        row=11, column=0, columnspan=3, sticky="ew", padx=8
     )
     courses_tab.columnconfigure(1, weight=1)
     courses_tab.rowconfigure(10, weight=1)

@@ -74,29 +74,45 @@ def add_application(company, job_title, status):
 def get_applications():
     with sqlite3.connect(DB_PATH) as conn:
         return conn.execute(
-            """SELECT company, job_title, status
+            """SELECT application_id, company, job_title, status
                FROM applications
                ORDER BY application_id"""
         ).fetchall()
 
     
 # Update functions for students, courses, and applications --------------------------------------
-def update_student(student_id, name, email):
+def update_student(student_id, name, email, new_student_id=None):
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
-            "UPDATE students SET name = ?, email = ? WHERE student_id = ?",
-            (name, email, student_id),
+            """UPDATE students SET student_id = ?, name = ?, email = ?
+               WHERE student_id = ?""",
+            (
+                student_id if new_student_id is None else new_student_id,
+                name,
+                email,
+                student_id,
+            ),
         )
         conn.commit()
 
-def update_course(course_id, title, price, capacity, course_type, meeting_link=None, room_number=None, address=None):
+def update_course(course_id, title, price, capacity, course_type, meeting_link=None, room_number=None, address=None, new_course_id=None):
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute(
             """UPDATE courses
-               SET title = ?, price = ?, capacity = ?, course_type = ?,
+               SET course_id = ?, title = ?, price = ?, capacity = ?, course_type = ?,
                    meeting_link = ?, room_number = ?, address = ?
                WHERE course_id = ?""",
-            (title, price, capacity, course_type, meeting_link, room_number, address, course_id),
+            (
+                course_id if new_course_id is None else new_course_id,
+                title,
+                price,
+                capacity,
+                course_type,
+                meeting_link,
+                room_number,
+                address,
+                course_id,
+            ),
         )
         conn.commit()
 
@@ -106,4 +122,20 @@ def update_application(application_id, company, job_title, status):
             "UPDATE applications SET company = ?, job_title = ?, status = ? WHERE application_id = ?",
             (company, job_title, status, application_id),
         )
+        conn.commit()
+
+# Delete functions for students, courses, and applications --------------------------------------
+def delete_student(student_id):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("DELETE FROM students WHERE student_id = ?", (student_id,))
+        conn.commit()
+
+def delete_course(course_id):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("DELETE FROM courses WHERE course_id = ?", (course_id,))
+        conn.commit()
+
+def delete_application(application_id):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("DELETE FROM applications WHERE application_id = ?", (application_id,))
         conn.commit()
